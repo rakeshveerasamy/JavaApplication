@@ -29,13 +29,17 @@ public class studentListServlet extends HttpServlet {
 
 	
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		String column = request.getParameter("sort");
+		String order = request.getParameter("order");
+		String lowerIndex = request.getParameter("lower_index");
+		String upperIndex = request.getParameter("upper_index");
 		Connection con = null;
 		PrintWriter pw  =response.getWriter();
 		ArrayList<StudentDetails> stuList = new ArrayList<StudentDetails>();
 		JSONArray array=new JSONArray();
 		try {
 			con = DatabaseHandler.getConnection();
-			stuList = StudentDatabaseServlet.showDetails(con);
+			stuList = StudentDatabaseServlet.showDetails(con ,column,order,lowerIndex,upperIndex);
 			for(StudentDetails stu :stuList)
 			{
 	            	JSONObject record = new JSONObject();

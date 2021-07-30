@@ -7,14 +7,33 @@
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-        <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-        <link href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css" rel="stylesheet">
+        
        
  <script>
         $(document).ready(function(){
-            $.ajax({
+        	$.ajax({
+        		url:"rowCountServlet",
+        		type:"GET",
+        		success:function(result)
+        		{
+        			console.log(result);
+        			$('#row_length').val(Number(result));
+        		}
+        	});
+        	var upper = $("#entries_select").val();
+        	if(upper=="-1")
+        		{
+        		upper = $('#row_length').val();
+        		}
+        	$.ajax({
                 url: "studentListServlet",
-                type: "GET",
+                type: "POST",
+                data :{
+                	  sort:"student.name",
+                	  order:"asc",
+                	  lower_index :0,
+                	  upper_index : upper
+                },
                 success: function(result) {
                     var output = "";
                     $.each(result, function(key, value) {
@@ -26,11 +45,8 @@
                             "<td>" + value.INSTRUCTOR + "</td>"
                     });
                     $(".table-body").html(output);
-                    $('#courseStudent_table').DataTable({
-                    	searching: false,
-                    	 ordering: false,
-                    	 "lengthMenu": [[-1,5, 10, 25, -1], ["---select---",5, 10, 25, "All"]]
-                    });
+                    var entries = $("#entries_select").val();
+                    getPagination("#courseStudent_table",entries);   
                 }
             });
             $.ajax({
@@ -45,16 +61,27 @@
                     $("#sel").html(output);
                 }
             });  
-                   
         });
             function signout() {
                 window.location.href = "StudentLogoutServlet";
             }
 
             function add() {
+                $(".table-body").html("");
+            	var upper = $("#entries_select").val();
+            	if(upper=="-1")
+            		{
+            		upper = $('#row_length').val();
+            		}
                 $.ajax({
                     url: "studentListServlet",
                     type: "POST",
+                    data :{
+                  	  sort:$("#sort_column").val(),
+                  	  order:$("#sort_order").val(),
+                  	  lower_index :0,
+               	      upper_index :upper 
+                    },
                     success: function(result) {
                         var output = "";
                         $.each(result, function(key, value) {
@@ -68,12 +95,16 @@
                         $(".table-body").html(output);
                     }
                 });
-
             }
 
             function search() {
+            	var upper = $("#entries_select").val();
+            	if(upper=="-1")
+            		{
+            		upper = $('#row_length').val();
+            		}
                 var ele = document.getElementById('search').value;
-                $.get('searchServlet', { data: ele }, 
+                $.post('searchServlet', { data: ele }, 
                 		function(result) {
                     if (result != null) {
                         var output = "";
@@ -93,6 +124,7 @@
             }
 
             function clearInsert() {
+            	$("#alertmsg").css('display','none');
                 $("#rollno").val("");
                 $("#name").val("");
                 $("#phoneno").val("");
@@ -102,19 +134,22 @@
             }
 
             function validate() {
+            	$("#alertmsg").css('display','none');
+                $("#studentconfirm").css('display','none');
                 var rollnumber = $("#rollno").val();
                 var name = $("#name").val();
                 var phoneno = $("#phoneno").val();
                 var emailid = $("#emailid").val();
                 var dept = $('#department').val();
                 var sel = $('#sel').val();
-                if(rollnumber!=""&&name!=""&&phoneno!=""&&emailid!=""&&dept!=""&&sel=="")
+                if(rollnumber!=""&&name!=""&&phoneno!=""&&emailid!=""&&dept!=""&&sel!="")
                 	{
                 	dataInsert();
                 	}
                 else
                 	{
-                	$("#alertmsg").html("Entries can't be Empty");
+                    $("#studentconfirm").css('display','none');
+                	$("#alertmsg").html("Entries can't be Empty").css('display','block');
                 	}
             }
             function dataInsert() {
@@ -130,27 +165,28 @@
                     };
                 $.ajax({
                     url: "insertStudentServlet",
-                    type: "GET",
-                    //data: sendInfo,
-                    headers: sendInfo,
+                    type: "POST",
+                    data: sendInfo,
                     success: function(result) {
-                        $("#studentconfirm").html(" Data inserted Successfully<br/>");
-                        var output = "";
-                        $.each(result, function(key, value) {
-                            output += "<tr>" +
-                                "<td>" + value.NAME + "</td>" +
-                                "<td>" + value.ROLLNO + "</td>" +
-                                "<td>" + value.DEPARTMENT + "</td>" +
-                                "<td>" + value.COURSE + "</td>" +
-                                "<td>" + value.INSTRUCTOR + "</td>"
-                        });
-                        $(".table-body").append(output);
+                    	$("#alertmsg").css('display','none');
+                        $("#studentconfirm").html(" Data inserted Successfully<br/>").css('display','block');
+                        add();
                     }
                 });
+                $.ajax({
+            		url:"rowCountServlet",
+            		type:"GET",
+            		success:function(result)
+            		{
+            			console.log(result);
+            			$('#row_length').val(Number(result));
+            		}
+            	});
                 clearInsert();
             }
 
             function clearSubject() {
+            	$("#subalertmsg").css('display','none');
                 $("#subjectid").val("");
                 $("#subjectname").val("");
                 $('#subjectdept').val("");
@@ -158,6 +194,8 @@
             }
             function validateSubject()
             {
+            	$("#subalertmsg").css('display','none');
+                $("#subjectconfirm").css('display','none');
             	var id = $("#subjectid").val();
                 var name = $("#subjectname").val();
                 var dept = $('#subjectdept').val();
@@ -168,7 +206,8 @@
                 	}
                 else
                 	{
-                	$("#subalertmsg").html("Entries can't be Empty");
+                    $("#subjectconfirm").addClass("disable").removeClass("active");
+                	$("#subalertmsg").html("Entries can't be Empty").addClass("active").removeClass("disable");;
                 	}
             }
             function subjectInsert() {
@@ -178,7 +217,7 @@
                 var instructor = $('#instructor').val();
                 $.ajax({
                     url: "insertSubjectServlet",
-                    type: "GET",
+                    type: "POST",
                     data: {
                         id: id,
                         name: name,
@@ -186,16 +225,104 @@
                         instructor: instructor
                     },
                     success: function(result) {
-                        $("#subjectconfirm").html(" Data inserted Successfully <br/>");
+                    	$("#subalertmsg").css('display','none');
+                        $("#subjectconfirm").html(" Data inserted Successfully <br/>").css('display','block');
                         var output = "";
                         $.each(result, function(key, value) {
                             output += "<option value='" + value.COURSE_ID + "'>" +
-                                value.COURSE_NAME + "</option>"
+                                value.COURSE_NAME + "</option>";
                         });
                         $("#sel").append(output);
                     }
                 });
                 clearSubject();
+            }
+            function getPagination(table, maxRows) {
+                $('.paginationgalley').html('');
+                var currentIndex;
+                var totalpagenum;
+                var totalRows = $('#row_length').val();
+                if (true) {
+                    totalpagenum = Math.ceil(totalRows / maxRows);
+                    
+                    $('.paginationgalley').append('<button data-page="prev" class=" btn btn-info  disable" id="go-prev">Prev</button>').show();
+                    for (var i = 1; i <= totalpagenum;) {
+                        $('.paginationgalley').append('<button class="btn btn-light page-' + i + '" data-page=' + i + '>' + i++ +'</button>').show();
+                    }
+                    $('.paginationgalley').append('<button data-page="next" class=" btn btn-info  transform-rotate" id="go-next">Next</button>').show();
+
+                }
+                showig_rows_count(maxRows, 1, totalRows);
+                $('.paginationgalley button').on('click', function (e) {
+                    e.preventDefault();
+                    var pageNum;
+                    if ($(this).attr('data-page') != 'prev' && $(this).attr('data-page') != 'next') {
+                        pageNum = parseInt($(this).attr('data-page'));
+                    } else {
+                        pageNum = $(this).attr('data-page');
+                    }
+
+                    if (pageNum == 'prev' ) {
+                        pageNum = --currentIndex;
+                    } else if (pageNum == 'next' ) {
+                        pageNum = ++currentIndex;
+                    }
+                    var trIndex = 0;
+                    $('.paginationgalley button').removeClass('active');
+                    if (pageNum == 1) {
+                        $(this).parent().find('#go-prev').addClass('disable');
+                    } 
+                    else { 
+                    	$(this).parent().find('#go-prev').removeClass('disable');
+                    	}
+                    if (pageNum == totalpagenum) {
+                        $(this).parent().find('#go-next').addClass('disable');
+                    } 
+                    else { 
+                    	$(this).parent().find('#go-next').removeClass('disable'); 
+                    	}
+                    currentIndex = pageNum;
+                    showig_rows_count(maxRows, pageNum, totalRows);
+                    
+                });
+            }
+            function showig_rows_count(maxRows, pageNum, totalRows) {
+                var end_index = maxRows * pageNum;
+                if(end_index == -1)
+                	{
+                	 end_index = totalRows;
+                	}
+                var start_index = ((maxRows * pageNum) - maxRows) + parseFloat(1);
+                var string = 'Showing ' + start_index + ' to ' + end_index + ' of ' + totalRows + ' entries';
+                $(".table-body").html("");
+                var upper = $("#entries_select").val();
+            	if(upper=="-1")
+            		{
+            		upper = $('#row_length').val();
+            		}
+                $.ajax({
+                    url: "studentListServlet",
+                    type: "POST",
+                    data :{
+                  	  sort:$("#sort_column").val(),
+                  	  order:$("#sort_order").val(),
+                  	  lower_index :start_index-1,
+               	      upper_index :upper
+                    },
+                    success: function(result) {
+                        var output = "";
+                        $.each(result, function(key, value) {
+                            output += "<tr>" +
+                                "<td>" + value.NAME + "</td>" +
+                                "<td>" + value.ROLLNO + "</td>" +
+                                "<td>" + value.DEPARTMENT + "</td>" +
+                                "<td>" + value.COURSE + "</td>" +
+                                "<td>" + value.INSTRUCTOR + "</td>"
+                        });
+                        $(".table-body").html(output);
+                    }
+                });
+                $('.rows_count').html(string);
             }
         </script>
         <style>
@@ -207,22 +334,53 @@
 			th{
 			  color:white
 			}
-            
             .insert-container {
                 max-width: 800px;
                 margin: auto;
+               
             }
-             
+            #sort_label
+            {
+              color:white;
+            }
+            li
+            {
+              padding:0px 3px;
+            }
+            .disable
+            {
+              pointer-events:none;
+              opacity:0.6;
+            }
         </style>
     </head>
 
     <body>
         <div class="insert-container">
           <div class = "table_div">
-            <h2 style="color:blue; text-align:center">Student Elective Choosing Forum</h2>
+            <h2 style="color:blue; text-align:center;" class = "my-5">Student Elective Choosing Forum</h2>
+            <div style ="display:flex; justify-content:space-between;">
+               <div style ="display:flex">
+                <label style ="display:flex; align-items:center">
+                  Show
+	                  <select class="form-select form-select-sm" id= "entries_select" style = "display:inline-block" onchange = "getPagination('#courseStudent_table',this.value)">
+	                  	<option value = "5">5</option>
+	                  	<option value = "10">10</option>
+	                  	<option value = "25">25</option>
+	                  	<option value = "50">50</option>
+	                  	<option value = "-1">All</option>
+	                  </select>
+	               Entries
+                 </label> 
+                <button  type="button" id="sort_button" data-bs-toggle="modal" data-bs-target="#sortby_modal" class="mx-2 btn btn-primary ">Sort By</button>
+				</div>
+                <div >
+                    <label for="search">Search</label>
+                    <input  id="search" name="search" placeholder="Enter for search" onInput="search()" required/>
+                </div>
+            </div>
             <div align="right">
-                <label for="search">Search</label>
-                <input id="search" name="search" placeholder="Enter for search" onInput="search()" required/>
+                <input type = "hidden" id = "row_length"/>
                 <table id="courseStudent_table"  class="table table-striped mt-3" >
                     <thead class="bg-primary">
                         <tr>
@@ -236,15 +394,24 @@
                     <tbody class="table-body">
                     </tbody>
                 </table>
+                 <div style = "display: flex;justify-content: space-between;">
+	                 <span class = "rows_count"></span>
+					 <div class='header_wrap pagination-container'>
+					      <nav>
+					         <div class="paginationgalley pagination"></div>
+					       </nav>
+					  </div>		             
+	             </div>
                 <div align="right" class = "mt-3">
                     <button type="button" id="insertStudent_button" data-bs-toggle="modal" data-bs-target="#insertStudent" class="btn btn-success">Insert</button>
                     <button type="button" id="addSubject_button" data-bs-toggle="modal" data-bs-target="#addSubject" class="btn btn-success">Add Subject</button>
                 </div>
                 <div align="center">
-                    <button type="button" id="signout_button" class="btn btn-success" onclick="signout()">Sign Out</button>
+                    <button type="button" id="signout_button" class="btn btn-warning" onclick="signout()">Sign Out</button>
                 </div>
             </div>
            </div>
+           
             <div id="insertStudent" class="modal" tabindex="-1">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -273,7 +440,7 @@
                                 </div>
                                 <div class="col-md-12 mb-3">
                                     <label for="phoneno">Phone Number : </label>
-                                    <input type="number" name="phoneno" id="phoneno" autocomplete = "off" class="form-control" placeholder="Enter your Phone Number" required/>
+                                    <input type="tel" name="phoneno" id="phoneno" autocomplete = "off" class="form-control" placeholder="Enter your Phone Number" required/>
                                 </div>
                                 <div class="col-md-12 mb-3">
                                     <label for="department">Department : </label>
@@ -288,12 +455,13 @@
                             </form>
                         </div>
                         <div class="modal-footer">
-                            <button type="submit" form="student_form" name="insert" id="insertDataButton" class="btn btn-success" onclick="validate()">Insert</button>
+                            <button type="submit" form="student_form" name="insert" id="insertDataButton" class="btn btn-primary" onclick="validate()">Insert</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
             </div>
-
+              
             <div id="addSubject" class="modal" tabindex = "-1">
                 <div class="modal-dialog">
                         <div class="modal-content">
@@ -331,12 +499,45 @@
 	                            </form>
 	                        </div>
 	                        <div class="modal-footer">
-                            <button name="add"  form ="subject_form" id="subjectDataButton" class="btn btn-success" onclick="validateSubject()">Add Subject</button>
+                            <button name="add"  form ="subject_form" id="subjectDataButton" class="btn btn-primary" onclick="validateSubject()">Add Subject</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                         </div>
                 </div>
             </div>
-            </div>
+             <div id = "sortby_modal" class="modal fade bd-example-modal-sm" tabindex="-1" >
+  					<div class="modal-dialog modal-sm">
+  						<div class="modal-content">
+	                        <div class="modal-header">
+	                                <h4 class="modal-title text-primary">Sorting</h4>
+		                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+							    </div>
+	                        <div class="modal-body">
+		                           <label class="font-weight-bold  text-primary">
+		                           Sort by
+		                             <select id = "sort_column" >
+		                             	<option value = "student.name">Name</option>
+		                             	<option value = "student.rollno">Roll No</option>
+		                             	<option value = "student.dept">Department</option>
+		                             	<option value = "course.course_name">Subject</option>
+		                             	<option value = "course.instructor">Instructor</option>
+		                             </select>
+		                            In
+		                             <select id = "sort_order">
+		                             	<option value = "asc">Asc</option>
+		                             	<option value = "desc">Desc</option>
+		                             </select>
+		                           </label>
+	                        </div>
+	                        <div class="modal-footer">
+	                            <button name="add"   id="sortDataButton" class="btn btn-primary" onclick= "add()" >Apply</button>
+	                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+  						
+  					</div>
+  			 </div>
+        </div>
     </body>
 
     </html>

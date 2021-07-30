@@ -27,7 +27,7 @@ public class searchServlet extends HttpServlet {
         super();
     }
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
           String value = request.getParameter("data").trim();
           ArrayList<StudentDetails>list = new ArrayList<StudentDetails>();
           Connection con = null;

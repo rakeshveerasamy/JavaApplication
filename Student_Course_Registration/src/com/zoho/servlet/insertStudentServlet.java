@@ -33,12 +33,12 @@ public class insertStudentServlet extends HttpServlet {
         // TODO Auto-generated constructor stub
     }
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		String rollnumber = request.getHeader("rollnumber");
-		String name = request.getHeader("name");
-		String dept = request.getHeader("dept");
-		String subject = request.getHeader("subject");
+		String rollnumber = request.getParameter("rollnumber");
+		String name = request.getParameter("name");
+		String dept = request.getParameter("dept");
+		String subject = request.getParameter("subject");
 		Connection con = null;
 		JSONArray array=new JSONArray();
     	JSONObject record = new JSONObject();

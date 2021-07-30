@@ -206,7 +206,7 @@ public class StudentDatabaseServlet  {
     }
    
     public static ArrayList<StudentDetails> searchByValue(Connection con , String value) {
-    	String query = "select student.name,student.rollno,student.dept,course.course_name,course.instructor from student inner join selection on student.number = selection.number inner join course on selection.course_no = course.course_no where student.name like concat(?,'%') or student.dept like concat(?,'%') or course.course_name like concat(?,'%') or course.instructor like concat(?,'%') or course.course_no like concat(?,'%') or student.rollno like concat (?,'%')";
+    	String query = "select student.name,student.rollno,student.dept,course.course_name,course.instructor from student inner join selection on student.number = selection.number inner join course on selection.course_no = course.course_no where student.name like concat(?,'%') or student.dept like concat(?,'%') or course.course_name like concat(?,'%') or course.instructor like concat(?,'%') or course.course_no like concat(?,'%') or student.rollno like concat (?,'%') ";
     	int rollno;
 		String name, dept, coursename, instructor;
 		ArrayList<StudentDetails> stuList = new ArrayList<StudentDetails>();
@@ -248,8 +248,36 @@ public class StudentDatabaseServlet  {
 		return stuList;
     	
     }
-	public static ArrayList<StudentDetails> showDetails(Connection con) throws Exception {
-		String query = "select student.name,student.rollno,student.dept,course.course_name,course.instructor from student inner join selection on student.number = selection.number inner join course on selection.course_no = course.course_no";
+    public static int getRowCount(Connection con)
+    {
+    	String query = "select count(*) from student";
+    	PreparedStatement pst = null ;
+		ResultSet rs = null;
+		int rowCount = 0;
+		try {
+			pst = con.prepareStatement(query);
+			rs = pst.executeQuery();
+			if(rs.next())
+			{
+				rowCount = rs.getInt(1);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		finally{
+			try {
+				pst.close();
+				rs.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return rowCount;
+    }
+	public static ArrayList<StudentDetails> showDetails(Connection con ,String column,String order ,String lowerIndex,String UpperIndex) throws Exception {
+		String query = "select student.name,student.rollno,student.dept,course.course_name,course.instructor from student inner join selection on student.number = selection.number inner join course on selection.course_no = course.course_no order by "+column+" "+order+" limit "+lowerIndex+","+UpperIndex;
 		int rollno;
 		String name, dept, coursename, instructor;
 		ArrayList<StudentDetails> stuList = new ArrayList<StudentDetails>();

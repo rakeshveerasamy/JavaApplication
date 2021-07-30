@@ -31,7 +31,7 @@ public class insertSubjectServlet extends HttpServlet {
         // TODO Auto-generated constructor stub
     }
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	     String id = request.getParameter("id");
 	     String name = request.getParameter("name");
 	     String dept = request.getParameter("dept");
