@@ -4,7 +4,7 @@
     <html>
 
     <head>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
         
@@ -16,7 +16,6 @@
         		type:"GET",
         		success:function(result)
         		{
-        			console.log(result);
         			$('#row_length').val(Number(result));
         		}
         	});
@@ -46,21 +45,10 @@
                     });
                     $(".table-body").html(output);
                     var entries = $("#entries_select").val();
-                    getPagination("#courseStudent_table",entries);   
+                    getPagination("#courseStudent_table",entries,"1");   
                 }
             });
-            $.ajax({
-                url: "subjectDetailsServlet",
-                type: "GET",
-                success: function(result) {
-                    var output = "";
-                    $.each(result, function(key, value) {
-                        output += "<option value='" + value.COURSE_ID + "'>" +
-                            value.COURSE_NAME + "</option>"
-                    });
-                    $("#sel").html(output);
-                }
-            });  
+           
         });
             function signout() {
                 window.location.href = "StudentLogoutServlet";
@@ -95,36 +83,59 @@
                         $(".table-body").html(output);
                     }
                 });
+               
             }
-
-            function search() {
-            	var upper = $("#entries_select").val();
-            	if(upper=="-1")
+            function subjectUpdate()
+            {
+            	var no = $('#rollno').val();
+            	if(no!="")
             		{
-            		upper = $('#row_length').val();
+            		$('#insertDataButton').removeClass("disable");
+	            	  $.ajax({
+	                      url: "subjectDetailsServlet",
+	                      type: "POST",
+	                      data :{
+	                    	   rollno:no
+	                      },
+	                      success: function(result) {
+	                    	  console.log(result);
+	                          var output = "";
+	                          $.each(result, function(key, value) {
+	                              output += "<option value='" + value.COURSE_ID + "'>" +
+	                                  value.COURSE_NAME + "</option>"
+	                          });
+	                          $("#sel").html(output);
+	                      }
+	                  }); 
             		}
-                var ele = document.getElementById('search').value;
-                $.post('searchServlet', { data: ele }, 
-                		function(result) {
-                    if (result != null) {
-                        var output = "";
-                        $.each(result, function(key, value) {
-                            output += "<tr>" +
-                                "<td>" + value.NAME + "</td>" +
-                                "<td>" + value.ROLLNO + "</td>" +
-                                "<td>" + value.DEPARTMENT + "</td>" +
-                                "<td>" + value.COURSE + "</td>" +
-                                "<td>" + value.INSTRUCTOR + "</td>"
-                        });
-                        $(".table-body").html(output);
-                    } else {
-                        $(".table-body").html("<br/>No Matching Records Found<br/>");
-                    }
-                });
+            	else{
+            		var output = "<option >----select----</option>";
+            		$("#sel").html(output);
+            		$('#insertDataButton').addClass("disable");
+            	}
+            }
+            
+            function search() {
+            	$.ajax({
+            		url:"searchRowCount",
+            		type:"GET",
+            		data:{
+            			data:$('#search').val()
+            		},
+            		success:function(result)
+            		{
+            			console.log(result);
+            			$('#search_row_length').val(result);
+            			console.log($('#search_row_length').val());
+            			var entries = $("#entries_select").val();
+                        getPagination("#courseStudent_table",entries,"0"); 
+            		}
+            	});
+            	  
             }
 
             function clearInsert() {
-            	$("#alertmsg").css('display','none');
+            	$("#alertmsg").addClass('d-none').removeClass('d-block');
                 $("#rollno").val("");
                 $("#name").val("");
                 $("#phoneno").val("");
@@ -134,8 +145,8 @@
             }
 
             function validate() {
-            	$("#alertmsg").css('display','none');
-                $("#studentconfirm").css('display','none');
+            	$("#alertmsg").addClass('d-none').removeClass('d-block');
+                $("#studentconfirm").addClass('d-none').removeClass('d-block');
                 var rollnumber = $("#rollno").val();
                 var name = $("#name").val();
                 var phoneno = $("#phoneno").val();
@@ -148,8 +159,8 @@
                 	}
                 else
                 	{
-                    $("#studentconfirm").css('display','none');
-                	$("#alertmsg").html("Entries can't be Empty").css('display','block');
+                    $("#studentconfirm").addClass('d-none').removeClass('d-block');
+                	$("#alertmsg").addClass('d-block').removeClass('d-none').html("Entries can't be Empty");
                 	}
             }
             function dataInsert() {
@@ -168,8 +179,7 @@
                     type: "POST",
                     data: sendInfo,
                     success: function(result) {
-                    	$("#alertmsg").css('display','none');
-                        $("#studentconfirm").html(" Data inserted Successfully<br/>").css('display','block');
+                    	$("#alertmsg").addClass('d-none').removeClass('d-block');
                         add();
                     }
                 });
@@ -186,7 +196,7 @@
             }
 
             function clearSubject() {
-            	$("#subalertmsg").css('display','none');
+            	$("#subalertmsg").addClass('d-none').removeClass('d-block');
                 $("#subjectid").val("");
                 $("#subjectname").val("");
                 $('#subjectdept').val("");
@@ -194,8 +204,8 @@
             }
             function validateSubject()
             {
-            	$("#subalertmsg").css('display','none');
-                $("#subjectconfirm").css('display','none');
+            	$("#subalertmsg").addClass('d-none').removeClass('d-block');
+                $("#subjectconfirm").addClass('d-none').removeClass('d-block');
             	var id = $("#subjectid").val();
                 var name = $("#subjectname").val();
                 var dept = $('#subjectdept').val();
@@ -206,8 +216,8 @@
                 	}
                 else
                 	{
-                    $("#subjectconfirm").addClass("disable").removeClass("active");
-                	$("#subalertmsg").html("Entries can't be Empty").addClass("active").removeClass("disable");;
+                    $("#subjectconfirm").addClass('d-none').removeClass('d-block');
+                	$("#subalertmsg").addClass('d-block').removeClass('d-none').html("Entries can't be Empty");
                 	}
             }
             function subjectInsert() {
@@ -225,8 +235,8 @@
                         instructor: instructor
                     },
                     success: function(result) {
-                    	$("#subalertmsg").css('display','none');
-                        $("#subjectconfirm").html(" Data inserted Successfully <br/>").css('display','block');
+                    	$("#subalertmsg").addClass('d-none').removeClass('d-block');
+                        $("#subjectconfirm").html(" Data inserted Successfully <br/>").addClass('d-block').removeClass('d-none');
                         var output = "";
                         $.each(result, function(key, value) {
                             output += "<option value='" + value.COURSE_ID + "'>" +
@@ -237,36 +247,74 @@
                 });
                 clearSubject();
             }
-            function getPagination(table, maxRows) {
+            function getPagination(table, maxRows , status) {
                 $('.paginationgalley').html('');
                 var currentIndex;
                 var totalpagenum;
-                var totalRows = $('#row_length').val();
+                var totalRows;
+                if(status=="1")
+                	totalRows = $('#row_length').val();
+                else
+                	totalRows = $('#search_row_length').val();
                 if (true) {
                     totalpagenum = Math.ceil(totalRows / maxRows);
                     
                     $('.paginationgalley').append('<button data-page="prev" class=" btn btn-info  disable" id="go-prev">Prev</button>').show();
                     for (var i = 1; i <= totalpagenum;) {
-                        $('.paginationgalley').append('<button class="btn btn-light page-' + i + '" data-page=' + i + '>' + i++ +'</button>').show();
+                    	if(i<4)
+                          $('.paginationgalley').append('<button class="visible btn btn-light page-' + i + '" data-page=' + i + '>' + i++ +'</button>').show();
+                    	else
+                            $('.paginationgalley').append('<button class="nonvisible btn btn-light page-' + i + '" data-page=' + i + '>' + i++ +'</button>').show();
                     }
                     $('.paginationgalley').append('<button data-page="next" class=" btn btn-info  transform-rotate" id="go-next">Next</button>').show();
 
                 }
-                showig_rows_count(maxRows, 1, totalRows);
+                showig_rows_count(maxRows, 1, totalRows , status);
                 $('.paginationgalley button').on('click', function (e) {
                     e.preventDefault();
                     var pageNum;
                     if ($(this).attr('data-page') != 'prev' && $(this).attr('data-page') != 'next') {
                         pageNum = parseInt($(this).attr('data-page'));
+                  	    $(".page-"+pageNum).removeClass('btn-light').addClass('btn-secondary');
+                  	    for(var i=0;i<=totalpagenum;i++)
+                  	    	{
+                  	    	  if(i!=pageNum)
+                  	    		  {
+                            	  $(".page-"+i).removeClass('btn-secondary').addClass('btn-light');
+                  	    		  }
+                  	    	}
+                        for(var i=0;i<=totalpagenum;i++)
+                        	{
+                        	    if(i>=(pageNum-2)&& i<=(pageNum+2))
+                                	  $(".page-"+i).addClass('visible').removeClass('nonvisible');
+                        	    else
+                                	  $(".page-"+i).addClass('nonvisible').removeClass('visible');
+                        	}
                     } else {
                         pageNum = $(this).attr('data-page');
                     }
 
                     if (pageNum == 'prev' ) {
                         pageNum = --currentIndex;
+                  	    $(".page-"+pageNum).removeClass('btn-light').addClass('btn-secondary');
                     } else if (pageNum == 'next' ) {
                         pageNum = ++currentIndex;
+                  	    $(".page-"+pageNum).removeClass('btn-light').addClass('btn-secondary');
                     }
+                    for(var i=0;i<=totalpagenum;i++)
+          	    	{
+          	    	  if(i!=pageNum)
+          	    		  {
+                    	  $(".page-"+i).removeClass('btn-secondary').addClass('btn-light');
+          	    		  }
+          	    	}
+                    for(var i=0;i<=totalpagenum;i++)
+                	{
+                	    if(i>=(pageNum-2)&& i<=(pageNum+2))
+                        	  $(".page-"+i).addClass('visible').removeClass('nonvisible');
+                	    else
+                        	  $(".page-"+i).addClass('nonvisible').removeClass('visible');
+                	}
                     var trIndex = 0;
                     $('.paginationgalley button').removeClass('active');
                     if (pageNum == 1) {
@@ -282,11 +330,11 @@
                     	$(this).parent().find('#go-next').removeClass('disable'); 
                     	}
                     currentIndex = pageNum;
-                    showig_rows_count(maxRows, pageNum, totalRows);
+                    showig_rows_count(maxRows, pageNum, totalRows,status);
                     
                 });
             }
-            function showig_rows_count(maxRows, pageNum, totalRows) {
+            function showig_rows_count(maxRows, pageNum, totalRows,status) {
                 var end_index = maxRows * pageNum;
                 if(end_index == -1)
                 	{
@@ -300,29 +348,87 @@
             		{
             		upper = $('#row_length').val();
             		}
-                $.ajax({
-                    url: "studentListServlet",
-                    type: "POST",
-                    data :{
-                  	  sort:$("#sort_column").val(),
-                  	  order:$("#sort_order").val(),
-                  	  lower_index :start_index-1,
-               	      upper_index :upper
-                    },
-                    success: function(result) {
-                        var output = "";
-                        $.each(result, function(key, value) {
-                            output += "<tr>" +
-                                "<td>" + value.NAME + "</td>" +
-                                "<td>" + value.ROLLNO + "</td>" +
-                                "<td>" + value.DEPARTMENT + "</td>" +
-                                "<td>" + value.COURSE + "</td>" +
-                                "<td>" + value.INSTRUCTOR + "</td>"
-                        });
-                        $(".table-body").html(output);
-                    }
-                });
+            	if(status == "1")
+            		{
+		                $.ajax({
+		                    url: "studentListServlet",
+		                    type: "POST",
+		                    data :{
+		                  	  sort:$("#sort_column").val(),
+		                  	  order:$("#sort_order").val(),
+		                  	  lower_index :start_index-1,
+		               	      upper_index :upper
+		                    },
+		                    success: function(result) {
+		                        var output = "";
+		                        $.each(result, function(key, value) {
+		                            output += "<tr>" +
+		                                "<td>" + value.NAME + "</td>" +
+		                                "<td>" + value.ROLLNO + "</td>" +
+		                                "<td>" + value.DEPARTMENT + "</td>" +
+		                                "<td>" + value.COURSE + "</td>" +
+		                                "<td>" + value.INSTRUCTOR + "</td>"
+		                        });
+		                        $(".table-body").html(output);
+		                    }
+		                });
+            		}
+            	else
+            		{
+            		 var ele = document.getElementById('search').value;
+                     $.ajax({
+                         url: "searchServlet",
+                         type: "POST",
+                         data :{ 
+                         	data: ele,
+                         	lower_index:start_index-1,
+                         	upper_index : upper,
+                         	column : $("#sort_column").val(),
+                             order : $("#sort_order").val()
+                       	  }, 
+                         success: function(result) {
+                         	 if (result != null) {
+                                  var output = "";
+                                  $.each(result, function(key, value) {
+                                      output += "<tr>" +
+                                          "<td>" + value.NAME + "</td>" +
+                                          "<td>" + value.ROLLNO + "</td>" +
+                                          "<td>" + value.DEPARTMENT + "</td>" +
+                                          "<td>" + value.COURSE + "</td>" +
+                                          "<td>" + value.INSTRUCTOR + "</td>"
+                                  });
+                                  $(".table-body").html(output);
+                              } else {
+                                  $(".table-body").html("<br/>No Matching Records Found<br/>");
+                              }
+                         }
+                     });
+            		}
                 $('.rows_count').html(string);
+            }
+            function subjectDuplicate()
+            {
+            	var subject_id = $("#subjectid").val();
+            	var subject_name = $("#subjectname ").val();
+            	var instructor = $("#instructor").val();
+            	$.ajax({
+            		url:"searchSubjectDuplicateServlet",
+            		type:"POST",
+            		data:{
+            			id:subject_id,
+            			name:subject_name,
+            			instructor:instructor
+            		},
+            		success: function(result) {
+            			   console.log(result);
+	                       $("#subjectDataButton").removeClass("disable").addClass("active");
+		                  $("#subalertmsg").addClass('d-block').removeClass('d-none').html(result);
+            			  if(result == "Subject is already  exists ")
+            				  {
+			                       $("#subjectDataButton").addClass("disable").removeClass("active");
+            				  }
+            		}
+            	});
             }
         </script>
         <style>
@@ -352,6 +458,12 @@
               pointer-events:none;
               opacity:0.6;
             }
+            .visible{
+               display:block;
+            }
+            .nonvisible{
+              display:none;
+            }
         </style>
     </head>
 
@@ -363,7 +475,7 @@
                <div style ="display:flex">
                 <label style ="display:flex; align-items:center">
                   Show
-	                  <select class="form-select form-select-sm" id= "entries_select" style = "display:inline-block" onchange = "getPagination('#courseStudent_table',this.value)">
+	                  <select class="form-select form-select-sm" id= "entries_select" style = "display:inline-block" onchange = "getPagination('#courseStudent_table',this.value,'1')">
 	                  	<option value = "5">5</option>
 	                  	<option value = "10">10</option>
 	                  	<option value = "25">25</option>
@@ -381,6 +493,7 @@
             </div>
             <div align="right">
                 <input type = "hidden" id = "row_length"/>
+                <input type = "hidden" id = "search_row_length"/>
                 <table id="courseStudent_table"  class="table table-striped mt-3" >
                     <thead class="bg-primary">
                         <tr>
@@ -428,11 +541,11 @@
 		                        </div>
                                 <div class="col-md-12 mb-3">
                                     <label for="rollno">Roll Number : </label>
-                                    <input type="number" name="rollno" id="rollno" autocomplete = "off"class="form-control" placeholder="Enter your Roll Number" required/>
+                                    <input type="number" name="rollno" id="rollno" onInput = "subjectUpdate()"autocomplete = "off"class="form-control" placeholder="Enter your Roll Number" required/>
                                 </div>
                                 <div class="col-md-12 mb-3">
                                     <label for="name">Name : </label>
-                                    <input type="text" name="name" id="name" autocomplete="off" class="form-control" placeholder="Enter your Name" required/>
+                                    <input type="text" name="name" id="name"   autocomplete="off" class="form-control" placeholder="Enter your Name" required/>
                                 </div>
                                 <div class="col-md-12 mb-3">
                                     <label for="email">Email Id : </label>
@@ -455,7 +568,7 @@
                             </form>
                         </div>
                         <div class="modal-footer">
-                            <button type="submit" form="student_form" name="insert" id="insertDataButton" class="btn btn-primary" onclick="validate()">Insert</button>
+                            <button type="submit" form="student_form" name="insert" data-bs-dismiss="modal"  id="insertDataButton" class="btn btn-primary" onclick="validate()">Insert</button>
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
@@ -474,7 +587,6 @@
 	                                <div class = "col-md-12 mb-3">
 		                            	<div style="color:green" id="subjectconfirm"></div>
 		                            	<div style="color:red" id="subalertmsg"></div>
-		                            	
 		                            </div>
 		                            <div class = "col-md-12 mb-3">
 			                            <label for="subjectid">Subject Id : </label>
@@ -493,7 +605,7 @@
 		                            </div>
 		                            <div class = "col-md-12 mb-3">
 			                            <label for="instructor">Instructor : </label>
-			                            <input type="text" name="instructor" id="instructor" autocomplete="off" class="form-control" placeholder="Enter Instructor Name" required/><br>
+			                            <input type="text" name="instructor" id="instructor" autocomplete="off" class="form-control" onInput = "subjectDuplicate()" placeholder="Enter Instructor Name" required/><br>
 		                                <div class="invalid-feedback">Instructor field cannot be blank!</div>
 	                                </div>
 	                            </form>
@@ -537,6 +649,7 @@
   						
   					</div>
   			 </div>
+
         </div>
     </body>
 

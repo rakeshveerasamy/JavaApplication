@@ -36,14 +36,15 @@ public class subjectDetailsServlet extends HttpServlet {
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
+    	String rollnumber = request.getParameter("rollno");
 		Connection con = null;
 		ResultSet rs = null;
 	    JSONArray jsonSubArray = new JSONArray();
 		try{
 			con = DatabaseHandler.getConnection();
-			String query1 ="select course_name,course_no from course";
+			String query1 ="select course_name,course_no from course where course_no not in(select course_no from selection where rollno like "+rollnumber+")";
 			PreparedStatement pst = con.prepareStatement(query1);
 			rs = pst.executeQuery();
 		}catch (Exception e) {

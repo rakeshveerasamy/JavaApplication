@@ -31,6 +31,20 @@ public class StudentDatabaseServlet  {
 		return false;
 
 	} 
+	
+	public static boolean availableSubject(Connection con, String id,String name ,String instructor) throws SQLException {
+		String query = "select course_no,course_name,instructor from course use index(course_table) where course_no = ? and course_name = ? and instructor  = ?";
+		PreparedStatement pst = con.prepareStatement(query);
+		pst.setString(1, id);
+		pst.setString(2, name);
+		pst.setString(3, instructor);
+		ResultSet rs = pst.executeQuery();
+		if (rs.next()) {
+			return true;
+		}
+		return false;
+
+	} 
 	public static void addForgetUser(Connection con, String username, String password) throws SQLException {
 		String query = " update user set password like ? where user_id like ?";
 		PreparedStatement pst = con.prepareStatement(query);
@@ -70,9 +84,10 @@ public class StudentDatabaseServlet  {
 		return false;
 
 	}
+	
 	public static boolean availableStudent(Connection  con ,String rollnumber , String course)
 	{
-		String query = "select * from selection where rollno like ? and course_no like ?";
+		String query = "select * from selection USE INDEX(selection_table) where rollno like ? and course_no like ?";
 		PreparedStatement pst = null;
 		ResultSet rs  = null;
 		boolean flag = false;
@@ -162,21 +177,22 @@ public class StudentDatabaseServlet  {
 		pstm.setString(2, rollno);
 		pstm.setString(3, dept.toLowerCase());
 		pstm.executeUpdate();
-		query = "select number from student where name like ? and rollno like ? and dept like ?";
+		query = "select number from student USE INDEX(student_table_values) where name like ? and rollno like ? and dept like ?";
 		pstm = con.prepareStatement(query);
 		pstm.setString(1, name.toLowerCase());
 		pstm.setString (2, rollno);
 		pstm.setString(3, dept.toLowerCase());
 		ResultSet rs = pstm.executeQuery();
-        if(rs.next())
+		int number = 0;
+        while(rs.next())
         {
-        	int number  = rs.getInt(1);
-    		insertSelection(con,number,rollno,subject);
+            number  = rs.getInt(1);
         }
+		insertSelection(con,number,rollno,subject);
 		pstm.close();
 	}
 	public static StudentDetails getList(Connection con, String name ,String subject) throws Exception {
-		String query = "select student.name,student.rollno,student.dept,course.course_name,course.instructor from student inner join selection on student.number = selection.number inner join course on  selection.course_no = course.course_no where student.name like ? and course.course_no like ?";
+		String query = "select student.name,student.rollno,student.dept,course.course_name,course.instructor from student use index(student_name_value) inner join selection on student.number = selection.number inner join course use index (course_course_no) on  selection.course_no = course.course_no where student.name like ? and course.course_no like ?";
 		PreparedStatement pstm = con.prepareStatement(query);
 		pstm.setString(1, name.toLowerCase());
 		pstm.setString(2, subject);
@@ -205,8 +221,8 @@ public class StudentDatabaseServlet  {
 		pstm.close();
     }
    
-    public static ArrayList<StudentDetails> searchByValue(Connection con , String value) {
-    	String query = "select student.name,student.rollno,student.dept,course.course_name,course.instructor from student inner join selection on student.number = selection.number inner join course on selection.course_no = course.course_no where student.name like concat(?,'%') or student.dept like concat(?,'%') or course.course_name like concat(?,'%') or course.instructor like concat(?,'%') or course.course_no like concat(?,'%') or student.rollno like concat (?,'%') ";
+    public static ArrayList<StudentDetails> searchByValue(Connection con , String value,String column,String order,String lower,String upper) {
+    	String query = "select student.name,student.rollno,student.dept,course.course_name,course.instructor from student use index(student_table_values) inner join selection on student.number = selection.number inner join course use index(course_text) on selection.course_no = course.course_no where student.name like concat(?,'%') or student.dept like concat(?,'%') or course.course_name like concat(?,'%') or course.instructor like concat(?,'%')  or student.rollno like concat (?,'%') order by "+column+" "+order+" limit "+lower+","+upper+" ";
     	int rollno;
 		String name, dept, coursename, instructor;
 		ArrayList<StudentDetails> stuList = new ArrayList<StudentDetails>();
@@ -219,7 +235,6 @@ public class StudentDatabaseServlet  {
 			pst.setString(3, value.toLowerCase());
 			pst.setString(4, value.toLowerCase());
 			pst.setString(5, value.toLowerCase());
-			pst.setString(6, value.toLowerCase());
 			rs = pst.executeQuery();
 			while (rs.next()) {
 				name = rs.getString(1);
@@ -296,4 +311,40 @@ public class StudentDatabaseServlet  {
 		rs.close();
 		return stuList;
 	}
+	
+	public static int getSearchRowCount(Connection con ,String value)
+    {
+		String query = "select count(*) from student use index(student_table_values) inner join selection on student.number = selection.number inner join course use index(course_text) on selection.course_no = course.course_no where student.name like concat(?,'%') or student.dept like concat(?,'%') or course.course_name like concat(?,'%') or course.instructor like concat(?,'%')  or student.rollno like concat (?,'%')";
+		PreparedStatement pst = null;
+		ResultSet rs = null;
+		int rowCount = 0;
+		try {
+			pst = con.prepareStatement(query);
+			pst.setString(1, value.toLowerCase());
+			pst.setString(2, value.toLowerCase());
+			pst.setString(3, value.toLowerCase());
+			pst.setString(4, value.toLowerCase());
+			pst.setString(5, value.toLowerCase());
+			rs = pst.executeQuery();
+			if(rs.next())
+			{
+				rowCount = rs.getInt(1);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		finally
+		{
+		
+		try {
+			pst.close();
+			rs.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		}
+		return rowCount;
+    }
 }
